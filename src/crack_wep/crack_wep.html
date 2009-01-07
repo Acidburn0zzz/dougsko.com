@@ -1,0 +1,273 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+
+<!--Converted with LaTeX2HTML 2002-2-1 (1.71)
+original version by:  Nikos Drakos, CBLU, University of Leeds
+* revised and updated by:  Marcus Hennecke, Ross Moore, Herb Swan
+* with significant contributions from:
+  Jens Lippmann, Marek Rouchal, Martin Wilck and others -->
+<HTML>
+<HEAD>
+<TITLE>crack_wep</TITLE>
+<META NAME="description" CONTENT="crack_wep">
+<META NAME="keywords" CONTENT="crack_wep">
+<META NAME="resource-type" CONTENT="document">
+<META NAME="distribution" CONTENT="global">
+
+<META NAME="Generator" CONTENT="LaTeX2HTML v2002-2-1">
+<META HTTP-EQUIV="Content-Style-Type" CONTENT="text/css">
+
+<LINK REL="STYLESHEET" HREF="crack_wep.css">
+
+</HEAD>
+
+<BODY >
+
+<P>
+
+<BR>
+<BR>
+<BR>
+<BR>
+<BR>
+<BR>
+<BR>
+<BR>
+<BR>
+<BR>
+	<DIV ALIGN="CENTER">
+<BIG CLASS="XXLARGE">How to Crack WEP Protected Wireless Access Points
+	
+<BR>	<BR>
+<BR>
+<BR>
+<BR>
+<BR>
+<BR>
+<BR>
+	
+</BIG></DIV>
+
+<P>
+<BR>
+
+<H2><A NAME="SECTION00010000000000000000">
+Contents</A>
+</H2>
+<!--Table of Contents-->
+
+<UL CLASS="TofC">
+<LI><A NAME="tex2html13"
+  HREF="crack_wep.html#SECTION00020000000000000000">Preface</A>
+<LI><A NAME="tex2html14"
+  HREF="crack_wep.html#SECTION00030000000000000000">Introduction</A>
+<LI><A NAME="tex2html15"
+  HREF="crack_wep.html#SECTION00040000000000000000">Patching Your Driver</A>
+<UL>
+<LI><A NAME="tex2html16"
+  HREF="crack_wep.html#SECTION00041000000000000000">Check your current chipset</A>
+<LI><A NAME="tex2html17"
+  HREF="crack_wep.html#SECTION00042000000000000000">Patching and installing the MadWifi driver</A>
+</UL>
+<BR>
+<LI><A NAME="tex2html18"
+  HREF="crack_wep.html#SECTION00050000000000000000">Enumerating Targets</A>
+<UL>
+<LI><A NAME="tex2html19"
+  HREF="crack_wep.html#SECTION00051000000000000000">Using kismet</A>
+</UL>
+<BR>
+<LI><A NAME="tex2html20"
+  HREF="crack_wep.html#SECTION00060000000000000000">Getting Access</A>
+</UL>
+<!--End of Table of Contents-->
+
+<P>
+
+<H1><A NAME="SECTION00020000000000000000">
+Preface</A>
+</H1>
+In this document, I will summerize the steps required for cracking WEP
+protected wifi networks using an Atheros based wireless card, a patched
+version of the MadWifi driver, and the aircrack-ng suite.  All of this
+information can be found at the aircrack-ng website.
+
+<P>
+
+<H1><A NAME="SECTION00030000000000000000">
+Introduction</A>
+</H1>
+There are a few steps to cracking a WEP protected Access Point (AP).
+First off, you need to patch your MadWifi driver.  Next, you'll need to
+find out some information about the AP you are trying to access.  Next,
+you can actually perform the crack using the tools provided in the
+aircrack-ng suite.
+
+<P>
+
+<H1><A NAME="SECTION00040000000000000000">
+Patching Your Driver</A>
+</H1>
+
+<P>
+
+<H2><A NAME="SECTION00041000000000000000">
+Check your current chipset</A>
+</H2>
+Use this command to make sure that you are using an Atheros based
+wireless card: 
+<BR>
+<P>
+<code>lspci | grep -i atheros</code> 
+<BR>
+<P>
+You should see a result that looks like this: 
+
+<P>
+<PRE>
+02:0c.0 Ethernet controller: Atheros Communications Inc. AR5212/AR5213
+Multiprotocol MAC/baseband processor (rev 01)
+</PRE>
+
+<P>
+If you get something like this, then you can move on to replacing your
+driver with a patched version that will allow it to inject packets.  If
+you do not get a result similar to that above, then you most likely do
+not have an Atheros based wifi card and this section is of no use to
+you.
+
+<P>
+
+<H2><A NAME="SECTION00042000000000000000">
+Patching and installing the MadWifi driver</A>
+</H2>
+For the most detailed explaination on how to perform this step, please
+see the aircrack-ng
+website<A NAME="tex2html1"
+  HREF="#foot20"><SUP><SPAN CLASS="arabic">1</SPAN></SUP></A>.  The
+first step you need to do is bring your wireless card down.
+
+<P>
+<PRE>
+ifconfig ath0 down
+ifconfig wifi0 down
+</PRE>
+
+<P>
+Next, check out the proper version of MadWifi-ng and get its patch:
+
+<P>
+<PRE>
+svn -r 3745 checkout http://svn.madwifi-project.org/madwifi/trunk/ madwifi-ng
+wget http://patches.aircrack-ng.org/madwifi-ng-r3745.patch
+</PRE>
+
+<P>
+Now, apply the patch, uninstall the driver you were using before and
+install this one (you may need to use <code>sudo</code> in front of some of
+these commands):
+
+<P>
+<PRE>
+cd madwifi-ng
+patch -Np1 -i ../madwifi-ng-r3745.patch
+./scripts/madwifi-unload
+make
+make install
+depmod -ae
+modprobe ath_pci
+</PRE>
+
+<P>
+
+<H1><A NAME="SECTION00050000000000000000">
+Enumerating Targets</A>
+</H1>
+
+<P>
+
+<H2><A NAME="SECTION00051000000000000000">
+Using kismet</A>
+</H2>
+Here is where you will gather the information you need about the AP that
+you are trying to connect to.  For this task, I recommend you use a
+program called <code>kismet</code>.  Kismet is a wireless AP scanner that
+gathers a lot of useful information about the access points that it
+sees.  Once you have <code>kismet</code> installed,
+you will need to edit your <code>source</code> line in
+<code>/etc/kistmet/kismet.conf</code>.  This is what mine looks like:
+
+<P>
+<PRE>
+source=madwifi_b,wifi0,madwifi
+</PRE>
+
+<P>
+Now, you will need to find out the following pieces of information about the
+AP you are trying to connect to.  You will want to write these down:
+
+<P>
+
+<UL>
+<LI>BSSID (MAC address of access point)
+</LI>
+<LI>ESSID (Wireless network name)
+</LI>
+<LI>Access point channel
+</LI>
+</UL>
+
+<P>
+Here is how to find this information using <code>kismet</code>:
+
+<P>
+
+<OL>
+<LI>Run the command, <code>kismet</code>
+</LI>
+<LI>Press <code>space</code>
+</LI>
+<LI>Press <code>S</code> to sort
+</LI>
+<LI>Press <code>W</code> to sort by WEP
+</LI>
+<LI>Now use the arrow keys to scroll down to an AP that has a
+<code>Y</code> under the <code>W</code> column and press <code>enter</code>. 
+</LI>
+<LI>You should now see all the information you need
+</LI>
+</OL> 
+
+<P>
+
+<H1><A NAME="SECTION00060000000000000000">
+Getting Access</A>
+</H1>
+You are now ready to actually start cracking the AP.  I would recommend
+reading this tutorial for details on how this is
+done<A NAME="tex2html2"
+  HREF="#foot45"><SUP><SPAN CLASS="arabic">2</SPAN></SUP></A>.
+
+<P>
+
+<BR><HR><H4>Footnotes</H4>
+<DL>
+<DT><A NAME="foot20">...
+website</A><A
+ HREF="crack_wep.html#tex2html1"><SUP><SPAN CLASS="arabic">1</SPAN></SUP></A></DT>
+<DD>http://aircrack-ng.org/doku.php?id=madwifi-ng
+
+</DD>
+<DT><A NAME="foot45">...
+done</A><A
+ HREF="crack_wep.html#tex2html2"><SUP><SPAN CLASS="arabic">2</SPAN></SUP></A></DT>
+<DD>http://www.aircrack-ng.org/doku.php?id=simple_wep_crack&amp;DokuWiki=1028b58ed618f626a9a966f0e78ed235
+
+</DD>
+</DL>
+<BR><HR>
+<ADDRESS>
+doug
+2009-01-04
+</ADDRESS>
+</BODY>
+</HTML>
