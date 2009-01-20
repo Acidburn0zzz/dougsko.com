@@ -1,8 +1,9 @@
 ---
-title: Empty index page
+title: contact
 in_menu: true
-routed_title: New Website
+routed_title: contact
 ---
-## Empty index file
+h2. contact
 
-Fill this file with your own data!!!
+* *email:* dougtko at gmail dot com / gpg key: 91B45508
+* *irc:*  dougsko on "freenode":http://www.freenode.net

@@ -1,8 +1,13 @@
 ---
-title: Empty index page
+title: developing with msf3
 in_menu: true
-routed_title: New Website
+routed_title: msf3 tutorial
 ---
-## Empty index file
 
-Fill this file with your own data!!!
+h2. developing an exploit using the metasploit framework
+
+Learn how to use the Metasploit Framework to develop an exploit, starting from
+a vulerability report.
+
+* "html":msf3tut.html
+* "pdf":msf3tut.pdf

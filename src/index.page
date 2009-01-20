@@ -1,8 +1,9 @@
 ---
-title: Empty index page
+title: home
 in_menu: true
-routed_title: New Website
+routed_title: dougsko
 ---
-## Empty index file
+h2. welcome
 
-Fill this file with your own data!!!
+This is a website created with the webgen ruby gem.
+
