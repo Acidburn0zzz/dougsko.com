@@ -5,8 +5,8 @@ routed_title: radio
 ---
 h2. web controlled ham radio
 
-You can use the folling page to listen to and control a Yaesu FT-847 ham radio.
-If you get a 500 error, the radio is either turned off or the server script is
-not currently running.
+You can use the following page to listen to and control a Yaesu FT-847 ham
+radio.  If you get a 500 error, the radio is either turned off or the server
+script is not currently running.
 
 "radio control page":radio.rhtml
