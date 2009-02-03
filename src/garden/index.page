@@ -1,0 +1,39 @@
+---
+title: growing herbs with hydroponics
+in_menu: true
+routed_title: garden
+---
+
+h2. growing herbs hydroponically
+
+I decided I wanted to grow some fresh herbs in my kitchen, and to do
+that, a small hydroponic garden would be the best choice.  
+
+An Ebb and Flow system would be best for this sort of garden since it
+would have a small footprint on my counter, require few parts, and could
+easily be controlled with an X10 module and a cronjob.
+
+The garden consists of two tupperware containers, one sitting on top of
+the other.  The bottom container is the reservoir, holding the nutrient
+solution, and the top container holds the flower pots with the herbs in
+them.  An aquarium pump sits inside the bottom container and when
+switched on, it pumps the solution up into the top container, filling it
+up.  The water cannot overflow because there is an emergency drain tube
+in the top container preventing water from raising above it.  When the
+pump turns off, the water drains back down into the reservoir.  The
+black bag you see covering the bottom container is there to prevent
+algae from growing in the nutrient solution.  I am using two 18"
+flourecent grow lights mounted under the cabinets above the garden.
+
+!images/garden1_small.jpg!
+!images/garden2_small.jpg!
+!images/garden3_small.jpg!
+
+h2. progress
+
+<% log = YAML.load(File.open("src/garden/garden_log.yaml")) %>
+<% log.each do |entry| %>
+h3. <%= entry[:date] %>
+
+<%= entry[:text] %>
+<% end %>	

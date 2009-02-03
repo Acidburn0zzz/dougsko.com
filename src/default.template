@@ -23,7 +23,6 @@
 
       <div id="menu">
         {menu: {max_levels: 1, used_nodes: files}}
-	<ul><li class="webgen-menu-level1"><a href="radio.rhtml">radio</a></li></ul>
       </div>
 
       <!--
