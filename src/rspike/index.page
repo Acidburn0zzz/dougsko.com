@@ -30,17 +30,15 @@ code with many different protocols.  You can visit the SPIKE web page
 
 h3. tutorial
 
-Learn how to use rspike to fuzz your applications in this tutorial:
-
-* "html":tutorial.html
-* "pdf":tutorial.pdf
+I'll eventually write up a tutorial for using this framework, but until
+then, please refer to the examples provided in the source.
 
 h3. download
 
 You can check out the rspike git repository with this command:
 
 <pre>
-git clone git://github.com/dougsko/rspike.git
+  git clone git://github.com/dougsko/rspike.git
 </pre>
 
 Enjoy!

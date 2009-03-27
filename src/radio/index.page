@@ -9,4 +9,11 @@ You can use the following page to listen to and control a Yaesu FT-847 ham
 radio.  If you get a 500 error, the radio is either turned off or the server
 script is not currently running.
 
+This is all made possible by a thin ruby wrapper around "hamlib":http://hamlib.sourceforge.net.
+You can check out the ruby code with the following command:
+
+<pre>
+ git clone git://github.com/dougsko/rham.git
+</pre>
+
 "radio control page":radio.rhtml
