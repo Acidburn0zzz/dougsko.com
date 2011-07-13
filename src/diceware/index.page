@@ -1,0 +1,31 @@
+---
+title: diceware
+in_menu: true
+routed_title: diceware
+---
+
+h2. diceware: an android application for creating secure passphrases
+
+h3. what is diceware?
+
+According to the "Diceware
+homepage":http://world.std.com/~reinhold/diceware.html
+
+bq. "Diceware is a method for picking passphrases that uses dice to
+select words at random from a special list called the Diceware Word
+List. Each word in the list is preceded by a five digit number. All the
+digits are between one and six, allowing you to use the outcomes of five
+dice rolls to select one unique word from the list."
+
+h3. download
+
+Diceware can be downloaded from the "Android
+Market":https://market.android.com/details?id=com.dougsko.diceware&feature=search_result
+
+You can check out the diceware git repository with this command:
+
+<pre>
+  git clone git://github.com/dougsko/com.dougsko.diceware.git
+</pre>
+
+Enjoy!
