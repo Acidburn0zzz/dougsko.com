@@ -13,7 +13,7 @@ This is all made possible by a thin ruby wrapper around "hamlib":http://hamlib.s
 You can check out the ruby code with the following command:
 
 <pre>
- git clone git://github.com/dougsko/rham.git
+git clone git://github.com/dougsko/rham.git
 </pre>
 
 "radio control page":radio.rhtml

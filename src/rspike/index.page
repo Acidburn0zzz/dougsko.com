@@ -38,7 +38,7 @@ h3. download
 You can check out the rspike git repository with this command:
 
 <pre>
-  git clone git://github.com/dougsko/rspike.git
+git clone git://github.com/dougsko/rspike.git
 </pre>
 
 Enjoy!
