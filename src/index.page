@@ -3,7 +3,7 @@ title: home
 in_menu: true
 routed_title: dougsko
 ---
-%h2 welcome
+h2. welcome
 
 This is a website created with the webgen ruby gem.
 I chose webgen to create this site because I like the speed and
