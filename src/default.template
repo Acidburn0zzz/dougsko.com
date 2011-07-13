@@ -23,6 +23,7 @@
         {menu: {max_levels: 1, used_nodes: files}}
       </div>
 
+      <img src="http://projecteuler.net/profile/dougsko.png">
       <!--
       <h3>Links:</h3>
       <ul>
