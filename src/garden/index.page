@@ -30,13 +30,3 @@ flourecent grow lights mounted under the cabinets above the garden.
 !images/garden1_small.jpg!
 !images/garden2_small.jpg!
 !images/garden3_small.jpg!
-
-h2. progress
-
-<% require 'yaml' %>
-<% log = YAML.load(File.open("src/garden/garden_log.yaml")) %>
-<% log.each do |entry| %>
-h3. <%= entry[:date] %>
-
-<%= entry[:text] %>
-<% end %>	
