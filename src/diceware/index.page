@@ -6,6 +6,9 @@ routed_title: diceware
 
 h2. diceware: an android application for creating secure passphrases
 
+<img src="http://imgs.xkcd.com/comics/password_strength.png" width="525"
+height="389"/>
+
 h3. what is diceware?
 
 According to the "Diceware
